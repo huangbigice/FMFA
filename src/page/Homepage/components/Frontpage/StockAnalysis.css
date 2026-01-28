@@ -1,0 +1,354 @@
+.stock-analysis-container {
+  width: 100%;
+  max-width: 1472px;
+  margin: 0 auto;
+  padding: 40px 20px;
+}
+
+.stock-header {
+  margin-bottom: 30px;
+}
+
+.stock-title-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.stock-code {
+  font-size: 32px;
+  font-weight: 700;
+  color: #333;
+  margin: 0;
+  font-family: 'Didone', Georgia, serif;
+}
+
+.stock-price-section {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.stock-price {
+  font-size: 28px;
+  font-weight: 600;
+  color: #333;
+}
+
+.stock-change {
+  font-size: 18px;
+  font-weight: 500;
+  padding: 4px 12px;
+  border-radius: 4px;
+}
+
+.stock-change.positive {
+  color: #22c55e;
+  background-color: #dcfce7;
+}
+
+.stock-change.negative {
+  color: #ef4444;
+  background-color: #fee2e2;
+}
+
+.stock-charts-section {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+.chart-card {
+  background-color: #fff;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  height: 400px;
+}
+
+.chart-card > * {
+  margin-top: 20px;
+}
+
+.chart-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #333;
+  margin: 0 0 20px 0;
+  font-family: 'Didone', Georgia, serif;
+}
+
+/* AI聊天框和技術指標區塊的容器 */
+.ai-indicators-row {
+  display: flex;
+  gap: 30px;
+  align-items: flex-start;
+}
+
+/* AI聊天框 */
+.ai-chat-block {
+  display: flex;
+  flex-direction: column;
+  width: 500px;
+  height: 500px;
+}
+
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  margin-bottom: 16px;
+  background-color: #f9fafb;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.chat-message {
+  display: flex;
+  width: 100%;
+}
+
+.chat-message.user-message {
+  justify-content: flex-end;
+}
+
+.chat-message.ai-message {
+  justify-content: flex-start;
+}
+
+.message-content {
+  max-width: 75%;
+  padding: 12px 16px;
+  border-radius: 12px;
+  word-wrap: break-word;
+}
+
+.user-message .message-content {
+  background-color: #8884d8;
+  color: #fff;
+  border-bottom-right-radius: 4px;
+}
+
+.ai-message .message-content {
+  background-color: #fff;
+  color: #333;
+  border: 1px solid #e0e0e0;
+  border-bottom-left-radius: 4px;
+}
+
+.message-content p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.chat-input-container {
+  display: flex;
+  gap: 12px;
+  padding-top: 16px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.chat-input {
+  flex: 1;
+  padding: 12px 16px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.chat-input:focus {
+  border-color: #8884d8;
+}
+
+.chat-send-button {
+  padding: 12px 24px;
+  background-color: #8884d8;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.chat-send-button:hover:not(:disabled) {
+  background-color: #6b6ba8;
+}
+
+.chat-send-button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.indicators-block {
+  display: flex;
+  flex-direction: column;
+  width: 800px;
+  height: 500px;
+  margin-left: auto;
+}
+
+.indicators-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+.indicator-card {
+  background-color: #fff;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.indicator-label-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.indicator-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #666;
+  margin: 0;
+}
+
+.info-icon-container {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.info-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  border: 1.5px solid #666;
+  background-color: transparent;
+  color: #666;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: help;
+  transition: all 0.2s ease;
+  line-height: 1;
+  padding: 0;
+  margin: 0;
+}
+
+.info-icon:hover {
+  border-color: #8884d8;
+  color: #8884d8;
+  background-color: #f0f0ff;
+}
+
+.info-tooltip {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-bottom: 8px;
+  width: 280px;
+  background-color: #333;
+  color: #fff;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 12px;
+  line-height: 1.5;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.2s ease, visibility 0.2s ease;
+  z-index: 1000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.info-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: #333;
+}
+
+.info-tooltip p {
+  margin: 0;
+  color: #fff;
+}
+
+.info-icon-container:hover .info-tooltip {
+  opacity: 1;
+  visibility: visible;
+}
+
+.indicator-value {
+  font-size: 24px;
+  font-weight: 600;
+  color: #333;
+  margin: 0;
+}
+
+.indicator-value.overbought {
+  color: #ef4444;
+}
+
+.indicator-value.oversold {
+  color: #22c55e;
+}
+
+.indicator-value.positive {
+  color: #22c55e;
+}
+
+.indicator-value.negative {
+  color: #ef4444;
+}
+
+@media (max-width: 768px) {
+  .ai-indicators-row {
+    flex-direction: column;
+  }
+  
+  .ai-chat-block,
+  .indicators-block {
+    width: 100%;
+    height: 400px;
+  }
+  
+  .indicators-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .stock-code {
+    font-size: 24px;
+  }
+  
+  .stock-price {
+    font-size: 22px;
+  }
+}
+
+@media (max-width: 480px) {
+  .volume-indicators-row {
+    flex-direction: column;
+  }
+  
+  .indicators-grid {
+    grid-template-columns: 1fr;
+  }
+}
