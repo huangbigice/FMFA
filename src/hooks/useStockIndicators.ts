@@ -38,7 +38,7 @@ export function useStockIndicators(
       setError(null);
 
       try {
-        const result = await fetchStockIndicators(stockCode, period, controller.signal);
+        const result = await fetchStockIndicators(stockCode!, period, controller.signal);
         if (!cancelled) {
           setData(result);
         }

@@ -13,6 +13,9 @@ interface KDChartProps {
  * 显示 K 线和 D 线，以及超买超卖区域
  */
 const KDChart: React.FC<KDChartProps> = ({ dates, K, D }) => {
+  const overboughtPoints = K.map((value) => (value > 80 ? value : null));
+  const oversoldPoints = K.map((value) => (value < 20 ? value : null));
+
   const traces: Data[] = [
     {
       x: dates,
@@ -49,6 +52,26 @@ const KDChart: React.FC<KDChartProps> = ({ dates, K, D }) => {
       line: { dash: 'dot', color: '#888' },
       showlegend: false,
       hoverinfo: 'skip' as const,
+    },
+    // K > 80 紅點
+    {
+      x: dates,
+      y: overboughtPoints,
+      type: 'scatter',
+      mode: 'markers',
+      name: 'K>80',
+      marker: { color: '#ff4d4f', size: 6 },
+      showlegend: false,
+    },
+    // K < 20 綠點
+    {
+      x: dates,
+      y: oversoldPoints,
+      type: 'scatter',
+      mode: 'markers',
+      name: 'K<20',
+      marker: { color: '#52c41a', size: 6 },
+      showlegend: false,
     },
   ];
 

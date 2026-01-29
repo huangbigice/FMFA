@@ -18,3 +18,15 @@ export interface StockDataResponse {
 
 export interface IndicatorsResponse extends StockDataResponse {}
 
+export interface PredictionResponse {
+  symbol: string;
+  probabilities: Record<string, number>;
+  system_score: number;
+  tech_score: number;
+  fund_score: number;
+  proba_buy: number;
+  recommendation: string;
+  timestamp: string;
+}
+
+

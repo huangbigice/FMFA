@@ -45,6 +45,21 @@ export const getArrow = (arr: (number | null)[]): string => {
 };
 
 /**
+ * 将数值限制在指定区间内
+ */
+const clamp = (value: number, min: number, max: number): number => {
+  if (Number.isNaN(value)) return min;
+  if (value < min) return min;
+  if (value > max) return max;
+  return value;
+};
+
+const DEFAULT_KD_PERIOD = 9;
+const INITIAL_K = 50;
+const INITIAL_D = 50;
+const INITIAL_RSV = 50;
+
+/**
  * 计算 KD 指标
  * @param close 收盘价数组
  * @param high 最高价数组
@@ -56,20 +71,89 @@ export const calculateKD = (
   close: number[],
   high: number[],
   low: number[],
-  period: number = 9
+  period: number = DEFAULT_KD_PERIOD
 ): { K: number[]; D: number[] } => {
-  const low9 = SMA(low, period);
-  const high9 = SMA(high, period);
-  
-  const K = close.map((c, i) => {
-    const lowVal = low9[i];
-    const highVal = high9[i];
-    if (lowVal === null || highVal === null || highVal === lowVal) return 0;
-    return ((c - lowVal) / (highVal - lowVal)) * 100;
-  });
-  
-  const D = SMA(K, 3) as number[];
-  
+  const length = close.length;
+  if (length === 0) {
+    return { K: [], D: [] };
+  }
+
+  const K: number[] = new Array(length);
+  const D: number[] = new Array(length);
+
+  let prevK = INITIAL_K;
+  let prevD = INITIAL_D;
+  let prevRSV = INITIAL_RSV;
+
+  for (let i = 0; i < length; i++) {
+    const c = close[i];
+    const h = high[i];
+    const l = low[i];
+
+    // 判斷當天資料是否有效
+    const hasInvalidPrice =
+      c == null ||
+      h == null ||
+      l == null ||
+      Number.isNaN(c) ||
+      Number.isNaN(h) ||
+      Number.isNaN(l);
+
+    let rsv: number;
+
+    if (hasInvalidPrice) {
+      // 缺資料時延用前一筆 RSV，避免斷線
+      rsv = prevRSV;
+    } else {
+      // 計算過去 period 日的最高價與最低價
+      const start = Math.max(0, i - period + 1);
+      let windowHigh = -Infinity;
+      let windowLow = Infinity;
+
+      for (let j = start; j <= i; j++) {
+        const hj = high[j];
+        const lj = low[j];
+
+        if (
+          hj == null ||
+          lj == null ||
+          Number.isNaN(hj) ||
+          Number.isNaN(lj)
+        ) {
+          // 略過無效資料
+          continue;
+        }
+
+        if (hj > windowHigh) windowHigh = hj;
+        if (lj < windowLow) windowLow = lj;
+      }
+
+      if (windowHigh === -Infinity || windowLow === Infinity) {
+        // 視為沒有有效窗口，延用前值
+        rsv = prevRSV;
+      } else if (windowHigh === windowLow) {
+        // 分母為 0，沿用前值
+        rsv = prevRSV;
+      } else {
+        rsv = ((c - windowLow) / (windowHigh - windowLow)) * 100;
+        rsv = clamp(rsv, 0, 100);
+      }
+    }
+
+    // 券商慣用的 2/3, 1/3 平滑
+    const kRaw = (2 / 3) * prevK + (1 / 3) * rsv;
+    const kToday = clamp(kRaw, 0, 100);
+    const dRaw = (2 / 3) * prevD + (1 / 3) * kToday;
+    const dToday = clamp(dRaw, 0, 100);
+
+    K[i] = kToday;
+    D[i] = dToday;
+
+    prevK = kToday;
+    prevD = dToday;
+    prevRSV = rsv;
+  }
+
   return { K, D };
 };
 
