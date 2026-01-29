@@ -1,6 +1,8 @@
 import React from 'react';
 import './StockAnalysis.css';
 import { calculateAllIndicators, type StockIndicators } from '../../../../utils/stockIndicators';
+import { useStockIndicators } from '../../../../hooks/useStockIndicators';
+import type { StockRow } from '../../../../api/types';
 import KLineChart from './charts/KLineChart';
 import VolumeChart from './charts/VolumeChart';
 import KDChart from './charts/KDChart';
@@ -19,42 +21,6 @@ interface StockAnalysisProps {
   stockCode: string;
 }
 
-/**
- * 生成模拟股票数据
- * @param stockCode 股票代码
- * @param days 生成天数，默认 250 天（约一年）
- */
-const generateMockData = (stockCode: string, days: number = 250): StockData[] => {
-  const data: StockData[] = [];
-  // 使用stockCode的hash值来生成更稳定的随机价格
-  const codeHash = stockCode.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-  const basePrice = 100 + (codeHash % 50) + Math.random() * 10;
-  let currentPrice = basePrice;
-
-  for (let i = days - 1; i >= 0; i--) {
-    const date = new Date();
-    date.setDate(date.getDate() - i);
-    const change = (Math.random() - 0.5) * 4;
-    currentPrice = Math.max(50, currentPrice + change);
-
-    const open = currentPrice;
-    const close = open + (Math.random() - 0.5) * 3;
-    const high = Math.max(open, close) + Math.random() * 2;
-    const low = Math.min(open, close) - Math.random() * 2;
-
-    data.push({
-      date,
-      close: Math.round(close * 100) / 100,
-      open: Math.round(open * 100) / 100,
-      high: Math.round(high * 100) / 100,
-      low: Math.round(low * 100) / 100,
-      volume: Math.floor(Math.random() * 1000000) + 500000,
-    });
-  }
-
-  return data;
-};
-
 interface Message {
   id: number;
   text: string;
@@ -63,9 +29,33 @@ interface Message {
 }
 
 function StockAnalysis({ stockCode }: StockAnalysisProps) {
-  const [stockData, setStockData] = React.useState<StockData[]>(() =>
-    generateMockData(stockCode)
-  );
+  const { data: indicatorsData, loading, error } = useStockIndicators(stockCode, {
+    period: '10y',
+  });
+
+  const stockData: StockData[] = React.useMemo(() => {
+    if (!indicatorsData) return [];
+
+    return indicatorsData.data.map((row: StockRow) => {
+      const dateValue = 'date' in row ? row.date : null;
+      const date = dateValue ? new Date(String(dateValue)) : new Date();
+
+      const open = (row.open as number | null) ?? 0;
+      const high = (row.high as number | null) ?? 0;
+      const low = (row.low as number | null) ?? 0;
+      const close = (row.close as number | null) ?? 0;
+      const volume = (row.volume as number | null) ?? 0;
+
+      return {
+        date,
+        open,
+        high,
+        low,
+        close,
+        volume,
+      };
+    });
+  }, [indicatorsData]);
 
   // 提取数据数组用于指标计算
   const dates = stockData.map((d) => d.date);
@@ -83,14 +73,34 @@ function StockAnalysis({ stockCode }: StockAnalysisProps) {
 
   // 当前价格和涨跌幅
   const currentPrice = stockData[stockData.length - 1]?.close || 0;
-  const previousPrice = stockData[stockData.length - 2]?.close || currentPrice;
+  const previousPrice = stockData[stockData.length - 2]?.close || currentPrice || 1;
   const priceChange = currentPrice - previousPrice;
-  const priceChangePercent = ((priceChange / previousPrice) * 100).toFixed(2);
+  const priceChangePercent = previousPrice
+    ? ((priceChange / previousPrice) * 100).toFixed(2)
+    : '0.00';
 
-  // 获取最新指标值用于显示
+  // 获取最新指标值用于显示（來自後端的技術指標欄位）
   const maList = [5, 10, 20, 60, 120, 240];
-  const latestMA5 = indicators.MAs[5]?.filter((v): v is number => v !== null).at(-1) || 0;
-  const latestMA20 = indicators.MAs[20]?.filter((v): v is number => v !== null).at(-1) || 0;
+  const latestBackendRow = indicatorsData?.data.at(-1) as
+    | (StockRow & {
+        ma5?: number | null;
+        ma20?: number | null;
+        rsi_120?: number | null;
+        ema200?: number | null;
+        return_1?: number | null;
+        return_5?: number | null;
+      })
+    | undefined;
+
+  const latestMA5 = (latestBackendRow?.ma5 as number | null) ?? null;
+  const latestMA20 = (latestBackendRow?.ma20 as number | null) ?? null;
+  const latestRSI120 = (latestBackendRow?.rsi_120 as number | null) ?? null;
+  const latestEMA200 = (latestBackendRow?.ema200 as number | null) ?? null;
+  const latestReturn1 = (latestBackendRow?.return_1 as number | null) ?? null;
+  const formatValue = (value: number | null, digits: number = 2) =>
+    value == null || Number.isNaN(value) ? '--' : value.toFixed(digits);
+
+  // 前端本地計算的 KD / MACD 僅用於圖表，不再用於指標卡片與 AI 文案
   const latestK = indicators.KD.K.at(-1) || 0;
   const latestD = indicators.KD.D.at(-1) || 0;
   const latestMACD = indicators.MACD.MACD.at(-1) || 0;
@@ -109,7 +119,6 @@ function StockAnalysis({ stockCode }: StockAnalysisProps) {
 
   // 当 stockCode 改变时，更新股票数据和重置聊天消息
   React.useEffect(() => {
-    setStockData(generateMockData(stockCode));
     setMessages([
       {
         id: 1,
@@ -146,7 +155,14 @@ function StockAnalysis({ stockCode }: StockAnalysisProps) {
     setTimeout(() => {
       const aiMessage: Message = {
         id: messages.length + 2,
-        text: `關於您的問題「${inputMessage}」，根據 ${stockCode} 的技術指標分析：MA5為 ${latestMA5.toFixed(2)}，MA20為 ${latestMA20.toFixed(2)}，KD指標 K=${latestK.toFixed(2)} D=${latestD.toFixed(2)}，MACD=${latestMACD.toFixed(2)}。建議您綜合考慮這些指標做出投資決策。`,
+        text: `關於您的問題「${inputMessage}」，根據 ${stockCode} 的技術指標分析：MA5為 ${formatValue(
+          latestMA5
+        )}，MA20為 ${formatValue(latestMA20)}，RSI(120) 為 ${formatValue(
+          latestRSI120
+        )}，EMA200 為 ${formatValue(latestEMA200)}，日報酬率為 ${formatValue(
+          latestReturn1,
+          4
+        )}。建議您綜合考慮這些指標做出投資決策。`,
         sender: 'ai',
         timestamp: new Date(),
       };
@@ -167,12 +183,18 @@ function StockAnalysis({ stockCode }: StockAnalysisProps) {
         <div className="stock-title-section">
           <h2 className="stock-code">{stockCode}</h2>
           <div className="stock-price-section">
-            <span className="stock-price">${currentPrice.toFixed(2)}</span>
-            <span className={`stock-change ${priceChange >= 0 ? 'positive' : 'negative'}`}>
-              {priceChange >= 0 ? '+' : ''}{priceChange.toFixed(2)} ({priceChangePercent}%)
+            <span className="stock-price">
+              {loading ? '載入中...' : `$${currentPrice.toFixed(2)}`}
             </span>
+            {!loading && (
+              <span className={`stock-change ${priceChange >= 0 ? 'positive' : 'negative'}`}>
+                {priceChange >= 0 ? '+' : ''}
+                {priceChange.toFixed(2)} ({priceChangePercent}%)
+              </span>
+            )}
           </div>
         </div>
+        {error && <div className="stock-error">資料載入失敗：{error}</div>}
       </div>
 
       {/* K線圖和技術指標圖表 */}
@@ -262,7 +284,7 @@ function StockAnalysis({ stockCode }: StockAnalysisProps) {
                     </div>
                   </div>
                 </div>
-                <p className="indicator-value">{latestMA5.toFixed(2)}</p>
+                <p className="indicator-value">{formatValue(latestMA5)}</p>
               </div>
               <div className="indicator-card">
                 <div className="indicator-label-container">
@@ -274,7 +296,7 @@ function StockAnalysis({ stockCode }: StockAnalysisProps) {
                     </div>
                   </div>
                 </div>
-                <p className="indicator-value">{latestMA20.toFixed(2)}</p>
+                <p className="indicator-value">{formatValue(latestMA20)}</p>
               </div>
               <div className="indicator-card">
                 <div className="indicator-label-container">
