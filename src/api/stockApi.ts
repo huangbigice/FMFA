@@ -1,5 +1,10 @@
 import { apiRequest } from './client';
-import type { IndicatorsResponse, PredictionResponse, StockDataResponse } from './types';
+import type {
+  BacktestResponse,
+  IndicatorsResponse,
+  PredictionResponse,
+  StockDataResponse,
+} from './types';
 import { normalizeTaiwanSymbol } from './symbol';
 
 export async function fetchStockData(
@@ -41,6 +46,23 @@ export async function fetchPrediction(
     method: 'POST',
     signal,
     body: JSON.stringify({ symbol, period }),
+  });
+}
+
+export async function fetchBacktest(
+  rawSymbol: string,
+  start?: string,
+  end?: string,
+  signal?: AbortSignal
+): Promise<BacktestResponse> {
+  const symbol = normalizeTaiwanSymbol(rawSymbol);
+  const params = new URLSearchParams({ symbol });
+  if (start) params.set('start', start);
+  if (end) params.set('end', end);
+
+  return apiRequest<BacktestResponse>(`/api/v1/backtest?${params.toString()}`, {
+    method: 'GET',
+    signal,
   });
 }
 

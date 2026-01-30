@@ -2,9 +2,10 @@ import React from 'react';
 import './StockAnalysis.css';
 import { calculateAllIndicators, type StockIndicators } from '../../../../utils/stockIndicators';
 import { useStockIndicators } from '../../../../hooks/useStockIndicators';
-import type { StockRow } from '../../../../api/types';
-import { fetchPrediction } from '../../../../api/stockApi';
+import type { BacktestResponse, StockRow } from '../../../../api/types';
+import { fetchBacktest, fetchPrediction } from '../../../../api/stockApi';
 import { normalizeTaiwanSymbol } from '../../../../api/symbol';
+import EquityCurveChart from './charts/EquityCurveChart';
 import KLineChart from './charts/KLineChart';
 import VolumeChart from './charts/VolumeChart';
 import KDChart from './charts/KDChart';
@@ -63,6 +64,12 @@ function StockAnalysis({ stockCode }: StockAnalysisProps) {
   const [predictionLoading, setPredictionLoading] = React.useState(false);
   const [predictionError, setPredictionError] = React.useState<string | null>(null);
 
+  const [backtestResult, setBacktestResult] = React.useState<BacktestResponse | null>(null);
+  const [backtestLoading, setBacktestLoading] = React.useState(false);
+  const [backtestError, setBacktestError] = React.useState<string | null>(null);
+  const [backtestStart, setBacktestStart] = React.useState('');
+  const [backtestEnd, setBacktestEnd] = React.useState('');
+
   const stockData: StockData[] = React.useMemo(() => {
     if (!indicatorsData) return [];
 
@@ -116,6 +123,32 @@ function StockAnalysis({ stockCode }: StockAnalysisProps) {
     setKdTimeRange(12);
     setMacdTimeRange(12);
   }, [stockCode]);
+
+  React.useEffect(() => {
+    setBacktestResult(null);
+    setBacktestError(null);
+  }, [stockCode]);
+
+  const runBacktest = React.useCallback(async () => {
+    if (!stockCode) return;
+    setBacktestLoading(true);
+    setBacktestError(null);
+    try {
+      const result = await fetchBacktest(
+        stockCode,
+        backtestStart || undefined,
+        backtestEnd || undefined
+      );
+      setBacktestResult(result);
+    } catch (e) {
+      const message =
+        e instanceof Error ? e.message : typeof e === 'string' ? e : '回測失敗';
+      setBacktestError(message);
+      setBacktestResult(null);
+    } finally {
+      setBacktestLoading(false);
+    }
+  }, [stockCode, backtestStart, backtestEnd]);
 
   const PredictionSummary: React.FC = () => {
     if (predictionLoading) {
@@ -736,6 +769,81 @@ function StockAnalysis({ stockCode }: StockAnalysisProps) {
           />
         </div>
 
+        {/* 回測區塊 */}
+        <div className="chart-card backtest-section">
+          <h3 className="chart-title">回測</h3>
+          <p className="backtest-desc">以策略歷史表現檢視年化報酬、波動、最大回撤與夏普比率（預設最近 5 年）。</p>
+          <div className="backtest-controls">
+            <label className="backtest-label">
+              開始日期
+              <input
+                type="date"
+                className="backtest-input"
+                value={backtestStart}
+                onChange={(e) => setBacktestStart(e.target.value)}
+              />
+            </label>
+            <label className="backtest-label">
+              結束日期
+              <input
+                type="date"
+                className="backtest-input"
+                value={backtestEnd}
+                onChange={(e) => setBacktestEnd(e.target.value)}
+              />
+            </label>
+            <button
+              type="button"
+              className="backtest-run-button"
+              onClick={runBacktest}
+              disabled={backtestLoading || !stockCode}
+            >
+              {backtestLoading ? '回測中…' : '執行回測'}
+            </button>
+          </div>
+          {backtestError && (
+            <div className="backtest-error">{backtestError}</div>
+          )}
+          {backtestResult && (
+            <>
+              <div className="backtest-metrics">
+                <div className="backtest-metric-card">
+                  <span className="backtest-metric-label">年化報酬</span>
+                  <span className="backtest-metric-value">
+                    {(backtestResult.annualized_return * 100).toFixed(2)}%
+                  </span>
+                </div>
+                <div className="backtest-metric-card">
+                  <span className="backtest-metric-label">年化波動</span>
+                  <span className="backtest-metric-value">
+                    {(backtestResult.volatility * 100).toFixed(2)}%
+                  </span>
+                </div>
+                <div className="backtest-metric-card">
+                  <span className="backtest-metric-label">最大回撤</span>
+                  <span className="backtest-metric-value negative">
+                    {(backtestResult.max_drawdown * 100).toFixed(2)}%
+                  </span>
+                </div>
+                <div className="backtest-metric-card">
+                  <span className="backtest-metric-label">交易次數</span>
+                  <span className="backtest-metric-value">{backtestResult.trade_count}</span>
+                </div>
+                <div className="backtest-metric-card">
+                  <span className="backtest-metric-label">夏普比率</span>
+                  <span className="backtest-metric-value">
+                    {backtestResult.sharpe_ratio != null
+                      ? backtestResult.sharpe_ratio.toFixed(2)
+                      : '--'}
+                  </span>
+                </div>
+              </div>
+              <div className="backtest-chart">
+                <EquityCurveChart equityCurve={backtestResult.equity_curve} />
+              </div>
+            </>
+          )}
+        </div>
 
         {/* AI聊天框和技術指標區塊 */}
         <div className="ai-indicators-row">

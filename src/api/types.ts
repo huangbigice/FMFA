@@ -29,4 +29,21 @@ export interface PredictionResponse {
   timestamp: string;
 }
 
+export interface EquityCurvePoint {
+  date: string;
+  cumulative_return: number;
+}
+
+export interface BacktestResponse {
+  symbol: string;
+  start: string;
+  end: string;
+  annualized_return: number;
+  volatility: number;
+  max_drawdown: number;
+  trade_count: number;
+  sharpe_ratio: number | null;
+  equity_curve: EquityCurvePoint[];
+}
+
 
