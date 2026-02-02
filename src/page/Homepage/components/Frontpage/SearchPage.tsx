@@ -1,13 +1,24 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import './SearchPage.css'
 import StockAnalysis from './StockAnalysis'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link, useSearchParams } from 'react-router-dom'
 
 function SearchPage() {
+  const [searchParams, setSearchParams] = useSearchParams()
+  const demoFromUrl = searchParams.get('demo')?.trim() || null
+
   const [searchInput, setSearchInput] = useState('')
-  const [recentSearches, setRecentSearches] = useState<string[]>([])
-  const [selectedStock, setSelectedStock] = useState<string | null>(null)
+  const [recentSearches, setRecentSearches] = useState<string[]>(() =>
+    demoFromUrl ? [demoFromUrl] : []
+  )
+  const [selectedStock, setSelectedStock] = useState<string | null>(() => demoFromUrl)
   const navigate = useNavigate()
+
+  useEffect(() => {
+    if (demoFromUrl) {
+      setSearchParams({}, { replace: true })
+    }
+  }, [demoFromUrl, setSearchParams])
 
   const handleSearch = () => {
     if (searchInput.trim()) {
@@ -43,8 +54,10 @@ function SearchPage() {
   return (
     <div className="search-page">
       <div className="search-header-section">
-        
-        <h1 className="page-title" onClick={handleBack}>金融投資策略</h1>
+        <div className="search-header-top">
+          <h1 className="page-title" onClick={handleBack}>金融投資策略</h1>
+          <Link to="../system-directions" className="search-header-link">系統說明</Link>
+        </div>
         <div className="search-bar-wrapper">
           <div className="search-icon">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -55,7 +68,7 @@ function SearchPage() {
           <input
             type="text"
             className="search-input"
-            placeholder="搜尋股票代碼或名稱..."
+            placeholder="搜尋股票代碼..."
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             onKeyPress={handleKeyPress}

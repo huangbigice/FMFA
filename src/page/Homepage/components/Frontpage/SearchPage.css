@@ -19,6 +19,24 @@
   border-bottom: 1px solid #aaaaaa52;
 }
 
+.search-header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding-right: 204px;
+}
+
+.search-header-link {
+  font-size: 14px;
+  color: #2563eb;
+  text-decoration: none;
+}
+
+.search-header-link:hover {
+  text-decoration: underline;
+}
+
 .search-content-section {
   width: 100vw;
   min-height: 100vh;

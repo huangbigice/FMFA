@@ -23,6 +23,17 @@
   flex: 1;
   min-width: 280px;
   margin-left: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.disclaimer {
+  font-size: 12px;
+  line-height: 1.5;
+  color: #64748b;
+  margin: 0;
+  max-width: 100%;
 }
 
 .stock-code {

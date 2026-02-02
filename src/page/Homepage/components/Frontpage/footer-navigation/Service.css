@@ -1,0 +1,132 @@
+.service {
+  width: 100vw;
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: 56px 24px 80px;
+  background-color: #FBEFE4;
+  text-align: center;
+  box-sizing: border-box;
+  position: relative;
+}
+
+.service-back {
+  position: absolute;
+  top: 20px;
+  left: 24px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: #2563eb;
+  text-decoration: none;
+  padding: 8px 14px;
+  border-radius: 8px;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.service-back:hover {
+  background-color: rgba(37, 99, 235, 0.1);
+  color: #1d4ed8;
+}
+
+.service-header {
+  margin-bottom: 48px;
+  max-width: 840px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.service-title {
+  font-size: 32px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 16px;
+  text-align: center;
+}
+
+.service-lead {
+  font-size: 16px;
+  line-height: 1.7;
+  color: #475569;
+  margin: 0 0 24px;
+  text-align: center;
+}
+
+.service-main {
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+  max-width: 840px;
+  margin: 0 auto;
+  text-align: left;
+}
+
+.service-section {
+  text-align: left;
+  padding: 0;
+}
+
+.service-section h2 {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #cbd5e1;
+  text-align: left;
+}
+
+.service-section p {
+  font-size: 15px;
+  line-height: 1.75;
+  color: #475569;
+  margin: 0 0 12px;
+  text-align: left;
+}
+
+.service-section p:last-child {
+  margin-bottom: 0;
+}
+
+.service-section ul {
+  margin: 8px 0 16px;
+  padding-left: 24px;
+  list-style-position: outside;
+}
+
+.service-section li {
+  font-size: 15px;
+  line-height: 1.7;
+  color: #475569;
+  margin-bottom: 6px;
+  text-align: left;
+}
+
+.service-section li:last-child {
+  margin-bottom: 0;
+}
+
+.service-updated {
+  font-size: 14px;
+  color: #64748b;
+  margin-top: 16px;
+}
+
+@media (max-width: 768px) {
+  .service {
+    padding: 48px 16px 64px;
+  }
+
+  .service-back {
+    left: 16px;
+    top: 16px;
+  }
+
+  .service-title {
+    font-size: 26px;
+  }
+
+  .service-lead {
+    font-size: 15px;
+  }
+}

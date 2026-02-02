@@ -1,7 +1,11 @@
+// import { useState } from 'react'
 import './FrontPage.css'
-import {useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
+// import ProductDemoOverlay from './ProductDemoOverlay'
+
 function FrontPage() {
     const navigate = useNavigate()
+    // const [showDemoAnimation, setShowDemoAnimation] = useState(false)
 
     const enterAnalysis = () => {
         navigate('stocksearch')
@@ -9,13 +13,15 @@ function FrontPage() {
 
   return (
     <div className="front-page">
+      {/* {showDemoAnimation && (
+        <ProductDemoOverlay onClose={() => setShowDemoAnimation(false)} />
+      )} */}
       {/* Header */}
       <header className="header">
         <div className="header-content">
           <div className="logo">金融投資策略</div>
           <div className="header-nav">
             <span className="user-name">username</span>
-            <button className="enter-analysis-btn">進入分析</button>
           </div>
         </div>
       </header>
@@ -33,7 +39,7 @@ function FrontPage() {
             >
               開始分析 →
             </button>
-            <button className="btn-secondary">瀏覽示例</button>
+            {/* <button className="btn-secondary" onClick={() => setShowDemoAnimation(true)}>瀏覽動畫</button> */}
           </div>
         </div>
       </section>
@@ -132,29 +138,30 @@ function FrontPage() {
           <div className="footer-column">
             <h4 className="footer-title">產品</h4>
             <ul className="footer-links">
-              <li><a href="#">分析工具</a></li>
-              <li><a href="#">功能</a></li>
+              <li><Link to="analysis-tools" className="footer-link">分析工具</Link></li>
+              <li><Link to="function" className="footer-link">功能</Link></li>
             </ul>
           </div>
           <div className="footer-column">
             <h4 className="footer-title">資源</h4>
             <ul className="footer-links">
-              <li><a href="#">文檔</a></li>
-              <li><a href="#">常見問題</a></li>
+              <li><Link to="system-directions" className="footer-link">系統說明</Link></li>
+              <li><Link to="document" className="footer-link">文檔</Link></li>
+              <li><Link to="common-qa" className="footer-link">常見問題</Link></li>
             </ul>
           </div>
           <div className="footer-column">
             <h4 className="footer-title">公司</h4>
             <ul className="footer-links">
-              <li><a href="#">關於我們</a></li>
-              <li><a href="#">聯繫我們</a></li>
+              <li><Link to="about-us" className="footer-link">關於我們</Link></li>
+              <li><Link to="contact-information" className="footer-link">聯繫我們</Link></li>
             </ul>
           </div>
           <div className="footer-column">
             <h4 className="footer-title">法律</h4>
             <ul className="footer-links">
-              <li><a href="#">隱私政策</a></li>
-              <li><a href="#">服務條款</a></li>
+              <li><Link to="privacy-policy" className="footer-link">隱私政策</Link></li>
+              <li><Link to="service" className="footer-link">服務條款</Link></li>
             </ul>
           </div>
         </div>

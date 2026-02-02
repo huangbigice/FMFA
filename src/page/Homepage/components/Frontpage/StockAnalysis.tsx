@@ -4,6 +4,7 @@ import { calculateAllIndicators, type StockIndicators } from '../../../../utils/
 import { useStockIndicators } from '../../../../hooks/useStockIndicators';
 import type { BacktestResponse, StockRow } from '../../../../api/types';
 import { fetchBacktest, fetchPrediction } from '../../../../api/stockApi';
+import { API_BASE_URL } from '../../../../api/client';
 import { normalizeTaiwanSymbol } from '../../../../api/symbol';
 import EquityCurveChart from './charts/EquityCurveChart';
 import KLineChart from './charts/KLineChart';
@@ -619,7 +620,7 @@ function StockAnalysis({ stockCode }: StockAnalysisProps) {
     }
 
     try {
-      const resp = await fetch('/api/v1/chat/stream', {
+      const resp = await fetch(`${API_BASE_URL}/api/v1/chat/stream`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -721,6 +722,9 @@ function StockAnalysis({ stockCode }: StockAnalysisProps) {
         </div>
         <div className="stock-header-prediction">
           <PredictionSummary />
+          <p className="disclaimer">
+            本系統之分析與建議僅供參考，不構成任何投資建議或要約。過往回測結果不保證未來表現，投資人應自行判斷並自負盈虧。投資有風險，入市須謹慎。
+          </p>
         </div>
         {error && <div className="stock-error">資料載入失敗：{error}</div>}
       </div>
