@@ -196,8 +196,37 @@
 
 .stock-analysis-wrapper {
   width: 100%;
+  max-width: 1472px;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: stretch;
+}
+
+.analysis-tabs {
+  display: flex;
+  gap: 0;
+  margin-bottom: 16px;
+  border-bottom: 1px solid #ddd;
+}
+
+.analysis-tab {
+  padding: 12px 24px;
+  font-size: 15px;
+  font-weight: 500;
+  color: #555;
+  background-color: transparent;
+  border: none;
+  border-bottom: 3px solid transparent;
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s;
+}
+
+.analysis-tab:hover {
+  color: #333;
+}
+
+.analysis-tab.active {
+  color: #2563eb;
+  border-bottom-color: #2563eb;
 }
 

@@ -19,7 +19,7 @@ const VolumeChart: React.FC<VolumeChartProps> = ({
   close,
   open,
 }) => {
-  const colors = volume.map((v, i) => (close[i] >= open[i] ? 'red' : 'green'));
+  const colors = volume.map((_, i) => (close[i] >= open[i] ? 'red' : 'green'));
 
   const traces: Data[] = [
     {

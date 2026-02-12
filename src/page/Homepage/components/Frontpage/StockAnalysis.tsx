@@ -11,6 +11,7 @@ import KLineChart from './charts/KLineChart';
 import VolumeChart from './charts/VolumeChart';
 import KDChart from './charts/KDChart';
 import MACDChart from './charts/MACDChart';
+import VirtualOrderForm from './VirtualOrderForm';
 
 interface StockData {
   date: Date;
@@ -33,6 +34,7 @@ interface Message {
 }
 
 type TimeRange = 3 | 6 | 12 | 24;
+type ChartType = 'kline' | 'volume' | 'kd' | 'macd';
 
 const TIME_RANGES: { label: string; value: TimeRange }[] = [
   { label: '3個月', value: 3 },
@@ -116,13 +118,15 @@ function StockAnalysis({ stockCode }: StockAnalysisProps) {
   const [macdTimeRange, setMacdTimeRange] = React.useState<TimeRange>(12);
   const [selectedIndicatorGroup, setSelectedIndicatorGroup] =
     React.useState<IndicatorGroup>('all');
+  const [selectedChart, setSelectedChart] = React.useState<ChartType>('kline');
 
   React.useEffect(() => {
-    // 每次切換股票時，四張圖都重設為 12 個月
+    // 每次切換股票時，四張圖都重設為 12 個月，並回到 K 線圖
     setKTimeRange(12);
     setVolumeTimeRange(12);
     setKdTimeRange(12);
     setMacdTimeRange(12);
+    setSelectedChart('kline');
   }, [stockCode]);
 
   React.useEffect(() => {
@@ -516,6 +520,7 @@ function StockAnalysis({ stockCode }: StockAnalysisProps) {
   const [inputMessage, setInputMessage] = React.useState('')
   const [isStreaming, setIsStreaming] = React.useState(false)
   const messagesEndRef = React.useRef<HTMLDivElement>(null)
+  const shouldAutoScrollRef = React.useRef(false)
 
   // 当 stockCode 改变时，更新股票数据和重置聊天消息
   React.useEffect(() => {
@@ -528,6 +533,8 @@ function StockAnalysis({ stockCode }: StockAnalysisProps) {
       },
     ]);
     setInputMessage('');
+    // 避免切換/搜尋股票時把整頁捲到聊天區塊底部
+    shouldAutoScrollRef.current = false;
   }, [stockCode]);
 
   const scrollToBottom = () => {
@@ -535,6 +542,7 @@ function StockAnalysis({ stockCode }: StockAnalysisProps) {
   }
 
   React.useEffect(() => {
+    if (!shouldAutoScrollRef.current) return;
     scrollToBottom()
   }, [messages])
 
@@ -559,6 +567,8 @@ function StockAnalysis({ stockCode }: StockAnalysisProps) {
   const handleSendMessage = async () => {
     const trimmed = inputMessage.trim()
     if (!trimmed || isStreaming) return
+    // 只有在使用者真的開始聊天後，才自動捲動到底部
+    shouldAutoScrollRef.current = true;
 
     const userId = Date.now()
     const aiId = userId + 1
@@ -731,46 +741,89 @@ function StockAnalysis({ stockCode }: StockAnalysisProps) {
 
       {/* K線圖和技術指標圖表 */}
       <div className="stock-charts-section">
-        {/* K線圖 */}
-        <div className="chart-card">
-          {renderTimeRangeButtons(kTimeRange, setKTimeRange)}
-          <KLineChart
-            dates={kDates}
-            open={kOpen}
-            high={kHigh}
-            low={kLow}
-            close={kClose}
-            maData={kMAs}
-            maList={maList}
-          />
+        <div className="chart-tabs">
+          <button
+            type="button"
+            className={`chart-tab-button ${selectedChart === 'kline' ? 'active' : ''}`}
+            onClick={() => setSelectedChart('kline')}
+          >
+            K線圖
+          </button>
+          <button
+            type="button"
+            className={`chart-tab-button ${selectedChart === 'volume' ? 'active' : ''}`}
+            onClick={() => setSelectedChart('volume')}
+          >
+            成交量圖
+          </button>
+          <button
+            type="button"
+            className={`chart-tab-button ${selectedChart === 'kd' ? 'active' : ''}`}
+            onClick={() => setSelectedChart('kd')}
+          >
+            KD圖
+          </button>
+          <button
+            type="button"
+            className={`chart-tab-button ${selectedChart === 'macd' ? 'active' : ''}`}
+            onClick={() => setSelectedChart('macd')}
+          >
+            MACD圖
+          </button>
         </div>
 
-        {/* 成交量圖表 */}
+        {/* 單一圖表區塊，透過上方按鈕切換 */}
         <div className="chart-card">
-          {renderTimeRangeButtons(volumeTimeRange, setVolumeTimeRange)}
-          <VolumeChart
-            dates={volumeDates}
-            volume={volumeData}
-            close={volumeCloseData}
-            open={volumeOpenData}
-          />
+          {selectedChart === 'kline' && (
+            <>
+              {renderTimeRangeButtons(kTimeRange, setKTimeRange)}
+              <KLineChart
+                dates={kDates}
+                open={kOpen}
+                high={kHigh}
+                low={kLow}
+                close={kClose}
+                maData={kMAs}
+                maList={maList}
+              />
+            </>
+          )}
+
+          {selectedChart === 'volume' && (
+            <>
+              {renderTimeRangeButtons(volumeTimeRange, setVolumeTimeRange)}
+              <VolumeChart
+                dates={volumeDates}
+                volume={volumeData}
+                close={volumeCloseData}
+                open={volumeOpenData}
+              />
+            </>
+          )}
+
+          {selectedChart === 'kd' && (
+            <>
+              {renderTimeRangeButtons(kdTimeRange, setKdTimeRange)}
+              <KDChart dates={kdDates} K={kdK} D={kdD} />
+            </>
+          )}
+
+          {selectedChart === 'macd' && (
+            <>
+              {renderTimeRangeButtons(macdTimeRange, setMacdTimeRange)}
+              <MACDChart
+                dates={macdDates}
+                MACD={macdMACD}
+                DIF={macdDIF}
+                DEA={macdDEA}
+              />
+            </>
+          )}
         </div>
 
-        {/* KD 圖表 */}
-        <div className="chart-card">
-          {renderTimeRangeButtons(kdTimeRange, setKdTimeRange)}
-          <KDChart dates={kdDates} K={kdK} D={kdD} />
-        </div>
-
-        {/* MACD 圖表 */}
-        <div className="chart-card">
-          {renderTimeRangeButtons(macdTimeRange, setMacdTimeRange)}
-          <MACDChart
-            dates={macdDates}
-            MACD={macdMACD}
-            DIF={macdDIF}
-            DEA={macdDEA}
-          />
+        {/* 虛擬下單區塊 */}
+        <div className="chart-card virtual-order-card">
+          <VirtualOrderForm stockCode={stockCode} currentPrice={currentPrice} />
         </div>
 
         {/* 回測區塊 */}

@@ -46,4 +46,20 @@ export interface BacktestResponse {
   equity_curve: EquityCurvePoint[];
 }
 
+/** 虛擬下單的參考來源（供 DQV 佔比） */
+export type VirtualOrderSource = 'ai_reference' | 'self' | 'mixed';
+
+/** 單筆虛擬訂單 */
+export interface VirtualOrder {
+  id: string;
+  stockCode: string;
+  side: 'buy' | 'sell';
+  quantity: number;
+  price: number;
+  amount: number;
+  orderDate: string; // ISO 字串
+  source: VirtualOrderSource;
+  note?: string;
+}
+
 

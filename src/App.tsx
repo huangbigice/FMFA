@@ -5,6 +5,8 @@ import '@mantine/notifications/styles.css';
 import { BrowserRouter } from 'react-router-dom';
 // import { GoogleOAuthProvider } from '@react-oauth/google';
 import { Router } from './Router/index';
+import ScrollToTop from './Router/ScrollToTop';
+import { VirtualOrderProvider } from './contexts/VirtualOrderContext';
 // import { AuthProvider } from './contexts/AuthContext';
 
 const theme = createTheme({
@@ -25,9 +27,10 @@ function App() {
       <MantineProvider theme={theme} defaultColorScheme="light">
         <Notifications />
         <BrowserRouter>
-          {/* <AuthProvider> */}
+          <ScrollToTop />
+          <VirtualOrderProvider>
             <Router />
-          {/* </AuthProvider> */}
+          </VirtualOrderProvider>
         </BrowserRouter>
       </MantineProvider>
     // </GoogleOAuthProvider>

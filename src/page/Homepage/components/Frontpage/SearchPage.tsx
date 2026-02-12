@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react'
 import './SearchPage.css'
 import StockAnalysis from './StockAnalysis'
+import DecisionPage from './dq/DecisionPage'
 import { useNavigate, Link, useSearchParams } from 'react-router-dom'
+
+type AnalysisTab = 'traditional' | 'dq'
 
 function SearchPage() {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -12,6 +15,7 @@ function SearchPage() {
     demoFromUrl ? [demoFromUrl] : []
   )
   const [selectedStock, setSelectedStock] = useState<string | null>(() => demoFromUrl)
+  const [activeTab, setActiveTab] = useState<AnalysisTab>('traditional')
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -56,7 +60,13 @@ function SearchPage() {
       <div className="search-header-section">
         <div className="search-header-top">
           <h1 className="page-title" onClick={handleBack}>金融投資策略</h1>
-          <Link to="../system-directions" className="search-header-link">系統說明</Link>
+          <Link
+            to="../system-directions"
+            state={{ from: 'search' }}
+            className="search-header-link"
+          >
+            系統說明
+          </Link>
         </div>
         <div className="search-bar-wrapper">
           <div className="search-icon">
@@ -79,7 +89,28 @@ function SearchPage() {
       <div className="search-content-section">
         {selectedStock ? (
           <div className="stock-analysis-wrapper">
-            <StockAnalysis stockCode={selectedStock} />
+            <div className="analysis-tabs">
+              <button
+                type="button"
+                className={`analysis-tab ${activeTab === 'traditional' ? 'active' : ''}`}
+                onClick={() => setActiveTab('traditional')}
+              >
+                傳統分析
+              </button>
+              <button
+                type="button"
+                className={`analysis-tab ${activeTab === 'dq' ? 'active' : ''}`}
+                onClick={() => setActiveTab('dq')}
+              >
+                DQ 決策
+              </button>
+            </div>
+            {activeTab === 'traditional' && (
+              <StockAnalysis stockCode={selectedStock} />
+            )}
+            {activeTab === 'dq' && (
+              <DecisionPage stockCode={selectedStock} />
+            )}
           </div>
         ) : (
           <>

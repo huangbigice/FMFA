@@ -145,8 +145,24 @@ function FrontPage() {
           <div className="footer-column">
             <h4 className="footer-title">資源</h4>
             <ul className="footer-links">
-              <li><Link to="system-directions" className="footer-link">系統說明</Link></li>
-              <li><Link to="document" className="footer-link">文檔</Link></li>
+              <li>
+                <Link
+                  to="system-directions"
+                  state={{ from: 'home' }}
+                  className="footer-link"
+                >
+                  系統說明
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="document"
+                  state={{ from: 'home' }}
+                  className="footer-link"
+                >
+                  文檔
+                </Link>
+              </li>
               <li><Link to="common-qa" className="footer-link">常見問題</Link></li>
             </ul>
           </div>

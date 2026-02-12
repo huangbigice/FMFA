@@ -79,6 +79,22 @@
   gap: 30px;
 }
 
+.chart-tab-button {
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid #d1d5db;
+  background-color: #f9fafb;
+  color: #374151;
+  font-size: 12px;
+  cursor: pointer;
+  margin-right: 8px;
+  margin-bottom: 8px;
+}
+
+.chart-tab-button:hover {
+  background-color: #e5e7eb;
+}
+
 .chart-card {
   background-color: #fff;
   border-radius: 12px;
@@ -472,6 +488,205 @@
 
 .indicator-value.negative {
   color: #ef4444;
+}
+
+/* 虛擬下單區塊 */
+.virtual-order-card .chart-title {
+  margin-top: 0;
+}
+
+.virtual-order-section .chart-title {
+  margin-bottom: 8px;
+}
+
+.virtual-order-desc {
+  font-size: 13px;
+  color: #4b5563;
+  margin: 0 0 16px 0;
+  line-height: 1.5;
+}
+
+.virtual-order-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-width: 420px;
+}
+
+.virtual-order-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.virtual-order-row-with-submit {
+  flex-wrap: nowrap;
+}
+
+.virtual-order-row-with-submit .virtual-order-actions {
+  margin-top: 0;
+  margin-left: auto;
+}
+
+.virtual-order-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+  min-width: 100px;
+}
+
+.virtual-order-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.virtual-order-btn {
+  padding: 8px 16px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background-color: #f9fafb;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+}
+
+.virtual-order-btn.active.buy {
+  background-color: #dcfce7;
+  border-color: #22c55e;
+  color: #22c55e;
+}
+
+.virtual-order-btn.active.sell {
+  background-color: #fee2e2;
+  border-color: #ef4444;
+  color: #ef4444;
+}
+
+.virtual-order-input,
+.virtual-order-select {
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+  min-width: 160px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.virtual-order-input:focus,
+.virtual-order-select:focus {
+  border-color: #4f46e5;
+}
+
+.virtual-order-actions {
+  margin-top: 8px;
+}
+
+.virtual-order-submit {
+  padding: 10px 24px;
+  background-color: #4f46e5;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.virtual-order-submit:hover:not(:disabled) {
+  background-color: #4338ca;
+}
+
+.virtual-order-submit:disabled {
+  background-color: #9ca3af;
+  cursor: not-allowed;
+}
+
+/* 自製確認彈窗：固定於視窗最上層，不依賴 Mantine portal */
+.virtual-order-confirm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.virtual-order-confirm-backdrop {
+  position: absolute;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  cursor: pointer;
+}
+
+.virtual-order-confirm-dialog {
+  position: relative;
+  z-index: 1;
+  background-color: #fff;
+  border-radius: 12px;
+  padding: 24px;
+  max-width: 420px;
+  width: 100%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+}
+
+.virtual-order-confirm-title {
+  margin: 0 0 16px 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+}
+
+.virtual-order-confirm-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+  font-size: 14px;
+  color: #333;
+}
+
+.virtual-order-confirm-body p {
+  margin: 0;
+}
+
+.virtual-order-confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.virtual-order-confirm-btn {
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s;
+}
+
+.virtual-order-confirm-btn.secondary {
+  background-color: #f9fafb;
+  border: 1px solid #d1d5db;
+  color: #374151;
+}
+
+.virtual-order-confirm-btn.secondary:hover {
+  background-color: #e5e7eb;
+}
+
+.virtual-order-confirm-btn.primary {
+  background-color: #4f46e5;
+  border: none;
+  color: #fff;
+}
+
+.virtual-order-confirm-btn.primary:hover {
+  background-color: #4338ca;
 }
 
 /* 回測區塊 */

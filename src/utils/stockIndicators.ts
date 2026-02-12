@@ -9,7 +9,7 @@
  * @returns SMA 数组，前 n-1 个值为 null
  */
 export const SMA = (arr: number[], n: number): (number | null)[] => {
-  return arr.map((v, i) => {
+  return arr.map((_, i) => {
     if (i < n - 1) return null;
     const sum = arr.slice(i - n + 1, i + 1).reduce((a, b) => a + b, 0);
     return sum / n;

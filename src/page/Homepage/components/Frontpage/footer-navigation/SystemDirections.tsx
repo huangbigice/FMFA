@@ -1,13 +1,25 @@
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import './SystemDirections.css';
 
 const PathURL = import.meta.env.VITE_PATH || '/FA';
 
 export default function SystemDirections() {
+  const location = useLocation();
+  const state = location.state as { from?: 'home' | 'search' } | null;
+  const from = state?.from;
+
+  const backTo = from === 'search'
+    ? `${PathURL}/stocksearch`
+    : `${PathURL}/`;
+
+  const backText = from === 'search'
+    ? '← 返回分析頁面'
+    : '← 返回首頁';
+
   return (
     <div className="system-directions">
-      <Link to={`${PathURL}/stocksearch`} className="system-directions-back">
-        ← 返回分析頁面
+      <Link to={backTo} className="system-directions-back">
+        {backText}
       </Link>
       <header className="system-directions-header">
         <h1 className="system-directions-title">關於這套系統</h1>
@@ -46,8 +58,8 @@ export default function SystemDirections() {
             系統總分（system_score）由三部分加權組成，皆正規化在 0～1 區間後計算：
           </p>
           <ul>
-            <li>模型買進機率（proba_buy）權重 <strong>0.45</strong></li>
-            <li>基本面評分（fund_score）權重 <strong>0.30</strong></li>
+            <li>模型買進機率（proba_buy）權重 <strong>0.50</strong></li>
+            <li>基本面評分（fund_score）權重 <strong>0.25</strong></li>
             <li>技術面評分（tech_score）權重 <strong>0.25</strong></li>
           </ul>
           <p>
