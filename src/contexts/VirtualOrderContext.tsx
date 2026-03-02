@@ -20,6 +20,8 @@ interface VirtualOrderContextType {
     source: VirtualOrderSource;
     note?: string;
   }) => void;
+  deleteOrder: (id: string) => void;
+  clearAllOrders: () => void;
 }
 
 const VirtualOrderContext = createContext<VirtualOrderContextType | undefined>(undefined);
@@ -77,9 +79,19 @@ export function VirtualOrderProvider({ children }: { children: ReactNode }) {
     []
   );
 
+  const deleteOrder = useCallback((id: string) => {
+    setOrders((prev) => prev.filter((o) => o.id !== id));
+  }, []);
+
+  const clearAllOrders = useCallback(() => {
+    setOrders([]);
+  }, []);
+
   const value: VirtualOrderContextType = {
     orders,
     addOrder,
+    deleteOrder,
+    clearAllOrders,
   };
 
   return (

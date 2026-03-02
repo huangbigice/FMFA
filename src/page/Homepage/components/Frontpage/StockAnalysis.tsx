@@ -2,8 +2,8 @@ import React from 'react';
 import './StockAnalysis.css';
 import { calculateAllIndicators, type StockIndicators } from '../../../../utils/stockIndicators';
 import { useStockIndicators } from '../../../../hooks/useStockIndicators';
-import type { BacktestResponse, StockRow } from '../../../../api/types';
-import { fetchBacktest, fetchPrediction } from '../../../../api/stockApi';
+import type { BacktestResponse, StockRow, StockQuoteResponse, StockRatingResponse } from '../../../../api/types';
+import { fetchBacktest, fetchPrediction, fetchStockQuote, fetchStockRating } from '../../../../api/stockApi';
 import { API_BASE_URL } from '../../../../api/client';
 import { normalizeTaiwanSymbol } from '../../../../api/symbol';
 import EquityCurveChart from './charts/EquityCurveChart';
@@ -35,6 +35,8 @@ interface Message {
 
 type TimeRange = 3 | 6 | 12 | 24;
 type ChartType = 'kline' | 'volume' | 'kd' | 'macd';
+type ChartInterval = 'day' | '1m' | '5m' | '10m' | '30m' | '60m';
+type IntradayRangeDays = 1 | 5;
 
 const TIME_RANGES: { label: string; value: TimeRange }[] = [
   { label: '3個月', value: 3 },
@@ -43,11 +45,59 @@ const TIME_RANGES: { label: string; value: TimeRange }[] = [
   { label: '24個月', value: 24 },
 ];
 
+const INTERVAL_OPTIONS: { label: string; value: ChartInterval }[] = [
+  { label: '日線', value: 'day' },
+  { label: '1分鐘', value: '1m' },
+  { label: '5分鐘', value: '5m' },
+  { label: '10分鐘', value: '10m' },
+  { label: '30分鐘', value: '30m' },
+  { label: '60分鐘', value: '60m' },
+];
+
+const INTRADAY_RANGES: { label: string; value: IntradayRangeDays }[] = [
+  { label: '1日', value: 1 },
+  { label: '5日', value: 5 },
+];
+
 type IndicatorGroup = 'all' | 'MA' | 'RETURN' | 'RSI' | 'EMA' | 'KD' | 'MACD';
 
+// 評級圖標輔助函數
+// function getRatingIcon(rating: string): string {
+//   switch (rating) {
+//     case 'A':
+//       return '🏆';
+//     case 'B':
+//       return '✅';
+//     case 'C':
+//       return '⚪';
+//     case 'D':
+//       return '⚠️';
+//     case 'F':
+//       return '🔴';
+//     default:
+//       return '❓';
+//   }
+// }
+
 function StockAnalysis({ stockCode }: StockAnalysisProps) {
-  const { data: indicatorsData, loading, error } = useStockIndicators(stockCode, {
+  const { data: indicatorsData, error } = useStockIndicators(stockCode, {
     period: '10y',
+  });
+
+  const [chartInterval, setChartInterval] = React.useState<ChartInterval>('day');
+  const [intradayRangeDays, setIntradayRangeDays] = React.useState<IntradayRangeDays>(5);
+
+  const intradayPeriod = React.useMemo(() => {
+    return intradayRangeDays === 1 ? '1d' : '5d';
+  }, [intradayRangeDays]);
+
+  const {
+    data: intradayIndicatorsData,
+    loading: intradayLoading,
+    error: intradayError,
+  } = useStockIndicators(chartInterval === 'day' ? null : stockCode, {
+    period: intradayPeriod,
+    interval: chartInterval === 'day' ? undefined : chartInterval,
   });
 
   const displaySymbol = React.useMemo(
@@ -73,6 +123,42 @@ function StockAnalysis({ stockCode }: StockAnalysisProps) {
   const [backtestStart, setBacktestStart] = React.useState('');
   const [backtestEnd, setBacktestEnd] = React.useState('');
 
+  const [rating, setRating] = React.useState<StockRatingResponse | null>(null);
+  const [ratingLoading, setRatingLoading] = React.useState(false);
+  const [ratingError, setRatingError] = React.useState<string | null>(null);
+
+  const [quote, setQuote] = React.useState<StockQuoteResponse | null>(null);
+  const [quoteLoading, setQuoteLoading] = React.useState(false);
+  const [, setQuoteError] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    if (!stockCode) {
+      setQuote(null);
+      setQuoteLoading(false);
+      setQuoteError(null);
+      return;
+    }
+    let cancelled = false;
+    const controller = new AbortController();
+    setQuoteLoading(true);
+    setQuoteError(null);
+    fetchStockQuote(stockCode, controller.signal)
+      .then((data) => {
+        if (!cancelled) setQuote(data);
+      })
+      .catch((err) => {
+        if (cancelled || (err as Error).name === 'AbortError') return;
+        setQuoteError(err instanceof Error ? err.message : '報價載入失敗');
+      })
+      .finally(() => {
+        if (!cancelled) setQuoteLoading(false);
+      });
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
+  }, [stockCode]);
+
   const stockData: StockData[] = React.useMemo(() => {
     if (!indicatorsData) return [];
 
@@ -97,6 +183,30 @@ function StockAnalysis({ stockCode }: StockAnalysisProps) {
     });
   }, [indicatorsData]);
 
+  const intradayStockData: StockData[] = React.useMemo(() => {
+    if (!intradayIndicatorsData) return [];
+
+    return intradayIndicatorsData.data.map((row: StockRow) => {
+      const dateValue = 'date' in row ? row.date : null;
+      const date = dateValue ? new Date(String(dateValue)) : new Date();
+
+      const open = (row.open as number | null) ?? 0;
+      const high = (row.high as number | null) ?? 0;
+      const low = (row.low as number | null) ?? 0;
+      const close = (row.close as number | null) ?? 0;
+      const volume = (row.volume as number | null) ?? 0;
+
+      return {
+        date,
+        open,
+        high,
+        low,
+        close,
+        volume,
+      };
+    });
+  }, [intradayIndicatorsData]);
+
   // 提取数据数组用于指标计算
   const dates = stockData.map((d) => d.date);
   const close = stockData.map((d) => d.close);
@@ -105,10 +215,22 @@ function StockAnalysis({ stockCode }: StockAnalysisProps) {
   const low = stockData.map((d) => d.low);
   const volume = stockData.map((d) => d.volume);
 
+  const intradayDates = intradayStockData.map((d) => d.date);
+  const intradayClose = intradayStockData.map((d) => d.close);
+  const intradayOpen = intradayStockData.map((d) => d.open);
+  const intradayHigh = intradayStockData.map((d) => d.high);
+  const intradayLow = intradayStockData.map((d) => d.low);
+  const intradayVolume = intradayStockData.map((d) => d.volume);
+
   // 计算所有技术指标（全長度，用於技術指標卡片與各圖表的基礎資料）
   const indicators: StockIndicators = React.useMemo(
     () => calculateAllIndicators(close, high, low, volume),
     [close, high, low, volume]
+  );
+
+  const intradayIndicators: StockIndicators = React.useMemo(
+    () => calculateAllIndicators(intradayClose, intradayHigh, intradayLow, intradayVolume),
+    [intradayClose, intradayHigh, intradayLow, intradayVolume]
   );
 
   // 各圖表各自的時間區間，預設 12 個月
@@ -127,11 +249,38 @@ function StockAnalysis({ stockCode }: StockAnalysisProps) {
     setKdTimeRange(12);
     setMacdTimeRange(12);
     setSelectedChart('kline');
+    setChartInterval('day');
+    setIntradayRangeDays(5);
   }, [stockCode]);
 
   React.useEffect(() => {
     setBacktestResult(null);
     setBacktestError(null);
+    setRating(null);
+    setRatingError(null);
+  }, [stockCode]);
+
+  // 載入股票品質評級
+  React.useEffect(() => {
+    if (!stockCode) return;
+
+    const loadRating = async () => {
+      setRatingLoading(true);
+      setRatingError(null);
+      try {
+        const result = await fetchStockRating(stockCode);
+        setRating(result);
+      } catch (e) {
+        const message =
+          e instanceof Error ? e.message : typeof e === 'string' ? e : '評級載入失敗';
+        setRatingError(message);
+        setRating(null);
+      } finally {
+        setRatingLoading(false);
+      }
+    };
+
+    loadRating();
   }, [stockCode]);
 
   const runBacktest = React.useCallback(async () => {
@@ -254,46 +403,73 @@ function StockAnalysis({ stockCode }: StockAnalysisProps) {
     return startIndex;
   };
 
+  const getStartIndexForIntradayDays = (rangeDays: IntradayRangeDays): number => {
+    if (intradayDates.length === 0) return 0;
+    const lastDate = intradayDates[intradayDates.length - 1];
+    const cutoff = new Date(lastDate);
+    cutoff.setDate(cutoff.getDate() - rangeDays);
+    let startIndex = intradayDates.findIndex((d) => d >= cutoff);
+    if (startIndex === -1) startIndex = 0;
+    return startIndex;
+  };
+
   const sliceFrom = <T,>(arr: T[], start: number): T[] => arr.slice(start);
 
   // K 線圖用資料
-  const kStart = getStartIndexForRange(kTimeRange);
-  const kDates = sliceFrom(dates, kStart);
-  const kOpen = sliceFrom(open, kStart);
-  const kHigh = sliceFrom(high, kStart);
-  const kLow = sliceFrom(low, kStart);
-  const kClose = sliceFrom(close, kStart);
+  const isIntradayMode = chartInterval !== 'day';
+  const kStart = isIntradayMode ? getStartIndexForIntradayDays(intradayRangeDays) : getStartIndexForRange(kTimeRange);
+  const kDates = isIntradayMode ? sliceFrom(intradayDates, kStart) : sliceFrom(dates, kStart);
+  const kOpen = isIntradayMode ? sliceFrom(intradayOpen, kStart) : sliceFrom(open, kStart);
+  const kHigh = isIntradayMode ? sliceFrom(intradayHigh, kStart) : sliceFrom(high, kStart);
+  const kLow = isIntradayMode ? sliceFrom(intradayLow, kStart) : sliceFrom(low, kStart);
+  const kClose = isIntradayMode ? sliceFrom(intradayClose, kStart) : sliceFrom(close, kStart);
+
+  const kSourceIndicators = isIntradayMode ? intradayIndicators : indicators;
   const kMAs = Object.fromEntries(
-    Object.entries(indicators.MAs).map(([key, arr]) => [Number(key), sliceFrom(arr as (number | null)[], kStart)])
+    Object.entries(kSourceIndicators.MAs).map(([key, arr]) => [Number(key), sliceFrom(arr as (number | null)[], kStart)])
   ) as Record<number, (number | null)[]>;
 
   // 成交量圖用資料
-  const volumeStart = getStartIndexForRange(volumeTimeRange);
-  const volumeDates = sliceFrom(dates, volumeStart);
-  const volumeOpenData = sliceFrom(open, volumeStart);
-  const volumeCloseData = sliceFrom(close, volumeStart);
-  const volumeData = sliceFrom(volume, volumeStart);
+  const volumeStart = isIntradayMode
+    ? getStartIndexForIntradayDays(intradayRangeDays)
+    : getStartIndexForRange(volumeTimeRange);
+  const volumeDates = isIntradayMode ? sliceFrom(intradayDates, volumeStart) : sliceFrom(dates, volumeStart);
+  const volumeOpenData = isIntradayMode ? sliceFrom(intradayOpen, volumeStart) : sliceFrom(open, volumeStart);
+  const volumeCloseData = isIntradayMode ? sliceFrom(intradayClose, volumeStart) : sliceFrom(close, volumeStart);
+  const volumeData = isIntradayMode ? sliceFrom(intradayVolume, volumeStart) : sliceFrom(volume, volumeStart);
 
   // KD 圖用資料
-  const kdStart = getStartIndexForRange(kdTimeRange);
-  const kdDates = sliceFrom(dates, kdStart);
-  const kdK = sliceFrom(indicators.KD.K, kdStart);
-  const kdD = sliceFrom(indicators.KD.D, kdStart);
+  const kdStart = isIntradayMode
+    ? getStartIndexForIntradayDays(intradayRangeDays)
+    : getStartIndexForRange(kdTimeRange);
+  const kdDates = isIntradayMode ? sliceFrom(intradayDates, kdStart) : sliceFrom(dates, kdStart);
+  const kdSourceIndicators = isIntradayMode ? intradayIndicators : indicators;
+  const kdK = sliceFrom(kdSourceIndicators.KD.K, kdStart);
+  const kdD = sliceFrom(kdSourceIndicators.KD.D, kdStart);
 
   // MACD 圖用資料
-  const macdStart = getStartIndexForRange(macdTimeRange);
-  const macdDates = sliceFrom(dates, macdStart);
-  const macdMACD = sliceFrom(indicators.MACD.MACD, macdStart);
-  const macdDIF = sliceFrom(indicators.MACD.DIF, macdStart);
-  const macdDEA = sliceFrom(indicators.MACD.DEA, macdStart);
+  const macdStart = isIntradayMode
+    ? getStartIndexForIntradayDays(intradayRangeDays)
+    : getStartIndexForRange(macdTimeRange);
+  const macdDates = isIntradayMode ? sliceFrom(intradayDates, macdStart) : sliceFrom(dates, macdStart);
+  const macdSourceIndicators = isIntradayMode ? intradayIndicators : indicators;
+  const macdMACD = sliceFrom(macdSourceIndicators.MACD.MACD, macdStart);
+  const macdDIF = sliceFrom(macdSourceIndicators.MACD.DIF, macdStart);
+  const macdDEA = sliceFrom(macdSourceIndicators.MACD.DEA, macdStart);
 
-  // 当前价格和涨跌幅
-  const currentPrice = stockData[stockData.length - 1]?.close || 0;
-  const previousPrice = stockData[stockData.length - 2]?.close || currentPrice || 1;
-  const priceChange = currentPrice - previousPrice;
-  const priceChangePercent = previousPrice
-    ? ((priceChange / previousPrice) * 100).toFixed(2)
-    : '0.00';
+  // 当前价格和涨跌幅（fallback：來自歷史資料最後一筆）
+  const fallbackPrice = stockData[stockData.length - 1]?.close || 0;
+  const fallbackPrevious = stockData[stockData.length - 2]?.close || fallbackPrice || 1;
+  const fallbackChange = fallbackPrice - fallbackPrevious;
+  const fallbackChangePercent =
+    fallbackPrevious !== 0 ? ((fallbackChange / fallbackPrevious) * 100).toFixed(2) : '0.00';
+
+  // 顯示用：優先使用即時報價（yfinance），無則用 fallback
+  const currentPrice = quote ? quote.current_price : fallbackPrice;
+  const priceChange = quote ? quote.change : fallbackChange;
+  const priceChangePercent = quote
+    ? quote.change_percent.toFixed(2)
+    : fallbackChangePercent;
 
   // 获取最新指标值用于显示（來自後端的技術指標欄位）
   const maList = [5, 10, 20, 60, 120, 240];
@@ -564,6 +740,42 @@ function StockAnalysis({ stockCode }: StockAnalysisProps) {
     </div>
   );
 
+  const renderIntervalButtons = (
+    current: ChartInterval,
+    onChange: (value: ChartInterval) => void
+  ) => (
+    <div className="time-range-buttons">
+      {INTERVAL_OPTIONS.map((opt) => (
+        <button
+          key={opt.value}
+          type="button"
+          className={`time-range-button ${current === opt.value ? 'active' : ''}`}
+          onClick={() => onChange(opt.value)}
+        >
+          {opt.label}
+        </button>
+      ))}
+    </div>
+  );
+
+  const renderIntradayRangeButtons = (
+    current: IntradayRangeDays,
+    onChange: (value: IntradayRangeDays) => void
+  ) => (
+    <div className="time-range-buttons">
+      {INTRADAY_RANGES.map((opt) => (
+        <button
+          key={opt.value}
+          type="button"
+          className={`time-range-button ${current === opt.value ? 'active' : ''}`}
+          onClick={() => onChange(opt.value)}
+        >
+          {opt.label}
+        </button>
+      ))}
+    </div>
+  );
+
   const handleSendMessage = async () => {
     const trimmed = inputMessage.trim()
     if (!trimmed || isStreaming) return
@@ -720,15 +932,64 @@ function StockAnalysis({ stockCode }: StockAnalysisProps) {
           <h2 className="stock-code">{displaySymbol}</h2>
           <div className="stock-price-section">
             <span className="stock-price">
-              {loading ? '載入中...' : `$${currentPrice.toFixed(2)}`}
+              {quoteLoading ? '載入中...' : `$${currentPrice.toFixed(2)}`}
             </span>
-            {!loading && (
+            {!quoteLoading && (
               <span className={`stock-change ${priceChange >= 0 ? 'positive' : 'negative'}`}>
                 {priceChange >= 0 ? '+' : ''}
                 {priceChange.toFixed(2)} ({priceChangePercent}%)
               </span>
             )}
           </div>
+
+          {/* 品質評級標籤 */}
+          {ratingLoading && <div className="rating-loading">評級載入中...</div>}
+          {ratingError && <div className="rating-error">評級載入失敗：{ratingError}</div>}
+          {rating && !ratingLoading && (
+            <>
+              {/* <div className={`quality-badge ${rating.color}`}>
+                <span className="rating-icon">{getRatingIcon(rating.rating)}</span>
+                <span className="rating-text">
+                  {rating.rating}級 [{rating.label}]
+                </span>
+                {(backtestResult?.sharpe_ratio ?? rating.sharpe_ratio) != null && (
+                  <span className="rating-sharpe">
+                    Sharpe: {(backtestResult?.sharpe_ratio ?? rating.sharpe_ratio)!.toFixed(2)}
+                  </span>
+                )}
+              </div> */}
+
+              {/* 警告橫幅 */}
+              {/* {rating.warning && (
+                <div className="warning-banner">
+                  <p className="warning-text">
+                    ⚠️ 此標的風險較高，不建議納入投資組合
+                  </p>
+                  {rating.alternatives && rating.alternatives.length > 0 && (
+                    <div className="alternatives">
+                      <p className="alternatives-label">➡️ 替代建議：</p>
+                      <div className="alternatives-buttons">
+                        {rating.alternatives.map((alt) => (
+                          <button
+                            key={alt.symbol}
+                            type="button"
+                            className="alternative-button"
+                            onClick={() => {
+                              const code = alt.symbol.replace('.TW', '');
+                              window.location.href = `#/search?code=${code}`;
+                            }}
+                            title={`${alt.name} - ${alt.category}`}
+                          >
+                            {alt.symbol.replace('.TW', '')} ({alt.rating}級)
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )} */}
+            </>
+          )}
         </div>
         <div className="stock-header-prediction">
           <PredictionSummary />
@@ -741,6 +1002,18 @@ function StockAnalysis({ stockCode }: StockAnalysisProps) {
 
       {/* K線圖和技術指標圖表 */}
       <div className="stock-charts-section">
+        <div className="chart-interval-row">
+          <span className="chart-interval-label">週期</span>
+          {renderIntervalButtons(chartInterval, setChartInterval)}
+          {chartInterval !== 'day' && (
+            <>
+              <span className="chart-interval-sep" />
+              <span className="chart-interval-label">區間</span>
+              {renderIntradayRangeButtons(intradayRangeDays, setIntradayRangeDays)}
+            </>
+          )}
+        </div>
+
         <div className="chart-tabs">
           <button
             type="button"
@@ -776,47 +1049,71 @@ function StockAnalysis({ stockCode }: StockAnalysisProps) {
         <div className="chart-card">
           {selectedChart === 'kline' && (
             <>
-              {renderTimeRangeButtons(kTimeRange, setKTimeRange)}
-              <KLineChart
-                dates={kDates}
-                open={kOpen}
-                high={kHigh}
-                low={kLow}
-                close={kClose}
-                maData={kMAs}
-                maList={maList}
-              />
+              {chartInterval === 'day' ? renderTimeRangeButtons(kTimeRange, setKTimeRange) : null}
+              {chartInterval !== 'day' && intradayLoading ? (
+                <div>分鐘K線載入中…</div>
+              ) : chartInterval !== 'day' && intradayError ? (
+                <div>分鐘K線載入失敗：{intradayError}</div>
+              ) : (
+                <KLineChart
+                  dates={kDates}
+                  open={kOpen}
+                  high={kHigh}
+                  low={kLow}
+                  close={kClose}
+                  maData={kMAs}
+                  maList={maList}
+                />
+              )}
             </>
           )}
 
           {selectedChart === 'volume' && (
             <>
-              {renderTimeRangeButtons(volumeTimeRange, setVolumeTimeRange)}
-              <VolumeChart
-                dates={volumeDates}
-                volume={volumeData}
-                close={volumeCloseData}
-                open={volumeOpenData}
-              />
+              {chartInterval === 'day' ? renderTimeRangeButtons(volumeTimeRange, setVolumeTimeRange) : null}
+              {chartInterval !== 'day' && intradayLoading ? (
+                <div>分鐘成交量載入中…</div>
+              ) : chartInterval !== 'day' && intradayError ? (
+                <div>分鐘成交量載入失敗：{intradayError}</div>
+              ) : (
+                <VolumeChart
+                  dates={volumeDates}
+                  volume={volumeData}
+                  close={volumeCloseData}
+                  open={volumeOpenData}
+                />
+              )}
             </>
           )}
 
           {selectedChart === 'kd' && (
             <>
-              {renderTimeRangeButtons(kdTimeRange, setKdTimeRange)}
-              <KDChart dates={kdDates} K={kdK} D={kdD} />
+              {chartInterval === 'day' ? renderTimeRangeButtons(kdTimeRange, setKdTimeRange) : null}
+              {chartInterval !== 'day' && intradayLoading ? (
+                <div>分鐘 KD 載入中…</div>
+              ) : chartInterval !== 'day' && intradayError ? (
+                <div>分鐘 KD 載入失敗：{intradayError}</div>
+              ) : (
+                <KDChart dates={kdDates} K={kdK} D={kdD} />
+              )}
             </>
           )}
 
           {selectedChart === 'macd' && (
             <>
-              {renderTimeRangeButtons(macdTimeRange, setMacdTimeRange)}
-              <MACDChart
-                dates={macdDates}
-                MACD={macdMACD}
-                DIF={macdDIF}
-                DEA={macdDEA}
-              />
+              {chartInterval === 'day' ? renderTimeRangeButtons(macdTimeRange, setMacdTimeRange) : null}
+              {chartInterval !== 'day' && intradayLoading ? (
+                <div>分鐘 MACD 載入中…</div>
+              ) : chartInterval !== 'day' && intradayError ? (
+                <div>分鐘 MACD 載入失敗：{intradayError}</div>
+              ) : (
+                <MACDChart
+                  dates={macdDates}
+                  MACD={macdMACD}
+                  DIF={macdDIF}
+                  DEA={macdDEA}
+                />
+              )}
             </>
           )}
         </div>
@@ -830,33 +1127,58 @@ function StockAnalysis({ stockCode }: StockAnalysisProps) {
         <div className="chart-card backtest-section">
           <h3 className="chart-title">回測</h3>
           <p className="backtest-desc">以策略歷史表現檢視年化報酬、波動、最大回撤與夏普比率（預設最近 5 年）。</p>
-          <div className="backtest-controls">
-            <label className="backtest-label">
-              開始日期
-              <input
-                type="date"
-                className="backtest-input"
-                value={backtestStart}
-                onChange={(e) => setBacktestStart(e.target.value)}
-              />
-            </label>
-            <label className="backtest-label">
-              結束日期
-              <input
-                type="date"
-                className="backtest-input"
-                value={backtestEnd}
-                onChange={(e) => setBacktestEnd(e.target.value)}
-              />
-            </label>
-            <button
-              type="button"
-              className="backtest-run-button"
-              onClick={runBacktest}
-              disabled={backtestLoading || !stockCode}
-            >
-              {backtestLoading ? '回測中…' : '執行回測'}
-            </button>
+          <div className="backtest-top-row">
+            <div className="backtest-controls">
+              <label className="backtest-label">
+                開始日期
+                <input
+                  type="date"
+                  className="backtest-input"
+                  value={backtestStart}
+                  onChange={(e) => setBacktestStart(e.target.value)}
+                />
+              </label>
+              <label className="backtest-label">
+                結束日期
+                <input
+                  type="date"
+                  className="backtest-input"
+                  value={backtestEnd}
+                  onChange={(e) => setBacktestEnd(e.target.value)}
+                />
+              </label>
+              <button
+                type="button"
+                className="backtest-run-button"
+                onClick={runBacktest}
+                disabled={backtestLoading || !stockCode}
+              >
+                {backtestLoading ? '回測中…' : '執行回測'}
+              </button>
+            </div>
+
+            {/* 品質評級資訊卡（在執行回測按鈕右側）
+            {rating && (
+              <div className="quality-assessment-card-inline">
+                <h4 className="quality-assessment-title">品質評估</h4>
+                <div className={`quality-rating-badge ${rating.color}`}>
+                  <span className="rating-icon-large">{getRatingIcon(rating.rating)}</span>
+                  <div className="rating-info">
+                    <div className="rating-grade">
+                      {rating.rating}級 - {rating.label}
+                    </div>
+                    <div className="rating-description">{rating.description}</div>
+                  </div>
+                </div>
+                <div className="portfolio-eligibility">
+                  {rating.portfolio_eligible ? (
+                    <span className="eligible-yes">✅ 組合資格：符合納入標準</span>
+                  ) : (
+                    <span className="eligible-no">❌ 組合資格：不建議納入投資組合</span>
+                  )}
+                </div>
+              </div>
+            )} */}
           </div>
           {backtestError && (
             <div className="backtest-error">{backtestError}</div>
@@ -895,6 +1217,7 @@ function StockAnalysis({ stockCode }: StockAnalysisProps) {
                   </span>
                 </div>
               </div>
+
               <div className="backtest-chart">
                 <EquityCurveChart equityCurve={backtestResult.equity_curve} />
               </div>

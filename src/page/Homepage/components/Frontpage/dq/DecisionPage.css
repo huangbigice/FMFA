@@ -85,6 +85,86 @@
   line-height: 1.5;
 }
 
+.dq-verification-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.dq-verification-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+}
+
+.dq-verification-days {
+  display: flex;
+  gap: 6px;
+}
+
+.dq-day-btn {
+  padding: 8px 14px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+  background-color: #fff;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.dq-day-btn:hover {
+  background-color: #f3f4f6;
+  border-color: #9ca3af;
+}
+
+.dq-day-btn-active {
+  color: #fff;
+  background-color: #2563eb;
+  border-color: #2563eb;
+}
+
+.dq-day-btn-active:hover {
+  background-color: #1d4ed8;
+  border-color: #1d4ed8;
+}
+
+.dq-clear-all-btn {
+  margin-left: auto;
+  padding: 8px 14px;
+  font-size: 14px;
+  color: #b91c1c;
+  background-color: #fff;
+  border: 1px solid #fca5a5;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.15s, border-color 0.15s;
+}
+
+.dq-clear-all-btn:hover {
+  background-color: #fef2f2;
+  border-color: #ef4444;
+}
+
+.dq-delete-btn {
+  padding: 4px 10px;
+  font-size: 13px;
+  color: #b91c1c;
+  background-color: #fff;
+  border: 1px solid #fca5a5;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.15s, border-color 0.15s;
+}
+
+.dq-delete-btn:hover {
+  background-color: #fef2f2;
+  border-color: #ef4444;
+}
+
 .dq-verification-list {
   margin-top: 12px;
 }

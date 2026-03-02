@@ -4,6 +4,7 @@ import type { IndicatorsResponse } from '../api/types';
 
 interface UseStockIndicatorsOptions {
   period?: string;
+  interval?: string;
 }
 
 interface UseStockIndicatorsResult {
@@ -16,7 +17,7 @@ export function useStockIndicators(
   stockCode: string | null,
   options: UseStockIndicatorsOptions = {}
 ): UseStockIndicatorsResult {
-  const { period = '10y' } = options;
+  const { period = '10y', interval } = options;
 
   const [data, setData] = useState<IndicatorsResponse | null>(null);
   const [loading, setLoading] = useState(false);
@@ -38,7 +39,7 @@ export function useStockIndicators(
       setError(null);
 
       try {
-        const result = await fetchStockIndicators(stockCode!, period, controller.signal);
+        const result = await fetchStockIndicators(stockCode!, period, controller.signal, interval);
         if (!cancelled) {
           setData(result);
         }
@@ -65,7 +66,7 @@ export function useStockIndicators(
       cancelled = true;
       controller.abort();
     };
-  }, [stockCode, period]);
+  }, [stockCode, period, interval]);
 
   return { data, loading, error };
 }
