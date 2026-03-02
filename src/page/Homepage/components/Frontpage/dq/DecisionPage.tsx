@@ -3,7 +3,7 @@ import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recha
 import { useVirtualOrders } from '../../../../../contexts/VirtualOrderContext';
 import type { VirtualOrder, VirtualOrderSource, StockRow } from '../../../../../api/types';
 import { fetchStockIndicators } from '../../../../../api/stockApi';
-import { getCloseAfterSevenTradingDays } from '../../../../../utils/sevenDayClose';
+import { getCloseAfterNTradingDays } from '../../../../../utils/sevenDayClose';
 import { normalizeTaiwanSymbol } from '../../../../../api/symbol';
 import './DecisionPage.css';
 
@@ -20,7 +20,7 @@ interface DecisionPageProps {
 }
 
 export default function DecisionPage({ stockCode }: DecisionPageProps) {
-  const { orders } = useVirtualOrders();
+  const { orders, deleteOrder, clearAllOrders } = useVirtualOrders();
 
   const sourceStats = useMemo(() => {
     const counts: Record<VirtualOrderSource, number> = {
@@ -120,27 +120,37 @@ export default function DecisionPage({ stockCode }: DecisionPageProps) {
       </div>
 
       <div className="dq-verification-section">
-        <h3 className="dq-card-title">7 日印證</h3>
+        <h3 className="dq-card-title">N 日印證</h3>
         <p className="dq-verification-desc">
-          已滿 7 個交易日之虛擬訂單，比對下單日與 7 日後收盤價方向是否一致。
+          已滿所選天數之虛擬訂單，比對下單日與 N 日後收盤價方向是否一致。可依持有習慣選擇 3 / 5 / 7 / 14 個交易日。
         </p>
-        <SevenDayVerification orders={filteredOrders} />
+        <SevenDayVerification
+          orders={filteredOrders}
+          onDeleteOrder={deleteOrder}
+          onClearAll={clearAllOrders}
+        />
       </div>
     </div>
   );
 }
 
+const VERIFICATION_DAY_OPTIONS = [3, 5, 7, 14] as const;
+const DEFAULT_VERIFICATION_DAYS = 7;
+
 interface SevenDayVerificationProps {
   orders: VirtualOrder[];
+  onDeleteOrder: (id: string) => void;
+  onClearAll: () => void;
 }
 
-/** 判斷方向是否一致：買進後 7 日收盤 > 下單價為一致；賣出後 7 日收盤 < 下單價為一致 */
-function isDirectionConsistent(side: 'buy' | 'sell', orderPrice: number, closeAfter7: number): boolean {
-  if (side === 'buy') return closeAfter7 > orderPrice;
-  return closeAfter7 < orderPrice;
+/** 判斷方向是否一致：買進後 N 日收盤 > 下單價為一致；賣出後 N 日收盤 < 下單價為一致 */
+function isDirectionConsistent(side: 'buy' | 'sell', orderPrice: number, closeAfterN: number): boolean {
+  if (side === 'buy') return closeAfterN > orderPrice;
+  return closeAfterN < orderPrice;
 }
 
-function SevenDayVerification({ orders }: SevenDayVerificationProps) {
+function SevenDayVerification({ orders, onDeleteOrder, onClearAll }: SevenDayVerificationProps) {
+  const [verificationDays, setVerificationDays] = useState<number>(DEFAULT_VERIFICATION_DAYS);
   const [stockDataCache, setStockDataCache] = useState<Record<string, StockRow[]>>({});
   const [loading, setLoading] = useState(false);
 
@@ -200,14 +210,14 @@ function SevenDayVerification({ orders }: SevenDayVerificationProps) {
 
   const rows = orders.map((order) => {
     const rowsForStock = stockDataCache[order.stockCode] ?? [];
-    const closeAfter7 = getCloseAfterSevenTradingDays(order.orderDate, rowsForStock);
-    const hasResult = closeAfter7 != null;
+    const closeAfterN = getCloseAfterNTradingDays(order.orderDate, rowsForStock, verificationDays);
+    const hasResult = closeAfterN != null;
     const consistent =
-      hasResult ? isDirectionConsistent(order.side, order.price, closeAfter7) : null;
+      hasResult ? isDirectionConsistent(order.side, order.price, closeAfterN) : null;
 
     return {
       order,
-      closeAfter7: closeAfter7 ?? undefined,
+      closeAfterN: closeAfterN ?? undefined,
       hasResult,
       consistent,
     };
@@ -215,6 +225,29 @@ function SevenDayVerification({ orders }: SevenDayVerificationProps) {
 
   return (
     <div className="dq-verification-list">
+      <div className="dq-verification-toolbar">
+        <span className="dq-verification-label">驗證天數：</span>
+        <div className="dq-verification-days">
+          {VERIFICATION_DAY_OPTIONS.map((days) => (
+            <button
+              key={days}
+              type="button"
+              className={`dq-day-btn ${verificationDays === days ? 'dq-day-btn-active' : ''}`}
+              onClick={() => setVerificationDays(days)}
+            >
+              {days} 日
+            </button>
+          ))}
+        </div>
+        <button
+          type="button"
+          className="dq-clear-all-btn"
+          onClick={() => onClearAll()}
+          title="刪除全部虛擬訂單"
+        >
+          清空全部
+        </button>
+      </div>
       {loading && <p className="dq-loading">載入股價資料中…</p>}
       <div className="dq-verification-table-wrap">
         <table className="dq-verification-table">
@@ -223,25 +256,36 @@ function SevenDayVerification({ orders }: SevenDayVerificationProps) {
               <th>下單日</th>
               <th>股票</th>
               <th>方向</th>
-              <th>數量</th>
+              <th>數量（股）</th>
               <th>下單價</th>
-              <th>7 日後收盤</th>
+              <th>{verificationDays} 日後收盤</th>
               <th>方向一致</th>
+              <th>操作</th>
             </tr>
           </thead>
           <tbody>
-            {rows.map(({ order, closeAfter7, hasResult, consistent }) => (
+            {rows.map(({ order, closeAfterN, hasResult, consistent }) => (
               <tr key={order.id}>
                 <td>{order.orderDate.slice(0, 10)}</td>
                 <td>{normalizeTaiwanSymbol(order.stockCode)}</td>
                 <td>{order.side === 'buy' ? '買進' : '賣出'}</td>
                 <td>{order.quantity}</td>
                 <td>{order.price.toFixed(2)}</td>
-                <td>{hasResult ? (closeAfter7!.toFixed(2)) : '未滿 7 日／無資料'}</td>
+                <td>{hasResult ? (closeAfterN!.toFixed(2)) : `未滿 ${verificationDays} 日／無資料`}</td>
                 <td>
                   {consistent === true && <span className="dq-consistent">一致</span>}
                   {consistent === false && <span className="dq-inconsistent">不一致</span>}
                   {consistent === null && <span className="dq-pending">—</span>}
+                </td>
+                <td>
+                  <button
+                    type="button"
+                    className="dq-delete-btn"
+                    onClick={() => onDeleteOrder(order.id)}
+                    title="刪除此筆"
+                  >
+                    刪除
+                  </button>
                 </td>
               </tr>
             ))}

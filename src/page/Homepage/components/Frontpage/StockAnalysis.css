@@ -46,8 +46,21 @@
 
 .stock-price-section {
   display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.stock-price-row {
+  display: flex;
   align-items: center;
   gap: 16px;
+}
+
+.stock-price-label {
+  font-size: 13px;
+  color: #6b7280;
+  font-weight: 500;
 }
 
 .stock-price {
@@ -77,6 +90,28 @@
   display: flex;
   flex-direction: column;
   gap: 30px;
+}
+
+.chart-interval-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: -8px;
+}
+
+.chart-interval-label {
+  font-size: 12px;
+  color: #6b7280;
+  font-weight: 600;
+}
+
+.chart-interval-sep {
+  width: 1px;
+  height: 18px;
+  background-color: #e5e7eb;
+  display: inline-block;
+  margin: 0 4px;
 }
 
 .chart-tab-button {
@@ -766,14 +801,15 @@
   border-radius: 8px;
   color: #b91c1c;
   font-size: 14px;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 
 .backtest-metrics {
   display: flex;
   flex-wrap: wrap;
   gap: 16px;
-  margin-bottom: 24px;
+  margin-top: 4px;
+  margin-bottom: 20px;
 }
 
 .backtest-metric-card {
@@ -844,5 +880,353 @@
   
   .indicators-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+/* ========================================
+   品質評級樣式
+   ======================================== */
+
+/* 評級載入與錯誤狀態 */
+.rating-loading,
+.rating-error {
+  padding: 8px 12px;
+  margin: 12px 0;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.rating-loading {
+  background-color: #e3f2fd;
+  color: #1976d2;
+}
+
+.rating-error {
+  background-color: #ffebee;
+  color: #c62828;
+}
+
+/* 品質標籤 */
+.quality-badge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  margin: 16px 0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease;
+}
+
+.quality-badge:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.quality-badge.green {
+  background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+  color: #155724;
+  border: 2px solid #28a745;
+}
+
+.quality-badge.blue {
+  background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%);
+  color: #0c5460;
+  border: 2px solid #17a2b8;
+}
+
+.quality-badge.yellow {
+  background: linear-gradient(135deg, #fff3cd 0%, #ffeeba 100%);
+  color: #856404;
+  border: 2px solid #ffc107;
+}
+
+.quality-badge.orange {
+  background: linear-gradient(135deg, #ffe0b2 0%, #ffcc80 100%);
+  color: #e65100;
+  border: 2px solid #ff9800;
+}
+
+.quality-badge.red {
+  background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+  color: #721c24;
+  border: 2px solid #dc3545;
+}
+
+.rating-icon {
+  font-size: 24px;
+  display: flex;
+  align-items: center;
+}
+
+.rating-text {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.rating-sharpe {
+  margin-left: auto;
+  font-size: 14px;
+  padding: 4px 12px;
+  background-color: rgba(255, 255, 255, 0.7);
+  border-radius: 12px;
+  font-weight: 600;
+}
+
+/* 警告橫幅 */
+.warning-banner {
+  background: linear-gradient(135deg, #fff3cd 0%, #ffeeba 100%);
+  border-left: 4px solid #ffc107;
+  padding: 16px 20px;
+  margin: 16px 0;
+  border-radius: 6px;
+  box-shadow: 0 2px 6px rgba(255, 193, 7, 0.2);
+}
+
+.warning-text {
+  font-size: 15px;
+  font-weight: 600;
+  color: #856404;
+  margin: 0 0 12px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.alternatives {
+  margin-top: 12px;
+}
+
+.alternatives-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #856404;
+  margin: 0 0 8px 0;
+}
+
+.alternatives-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.alternative-button {
+  padding: 8px 16px;
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(40, 167, 69, 0.3);
+}
+
+.alternative-button:hover {
+  background: linear-gradient(135deg, #218838 0%, #1aa179 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(40, 167, 69, 0.4);
+}
+
+.alternative-button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(40, 167, 69, 0.3);
+}
+
+/* 回測頂部區域（包含控制區和品質評估卡） */
+.backtest-top-row {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  margin-bottom: -80px;
+  margin-top: -8px;
+}
+
+.backtest-controls {
+  flex: 0 0 auto;
+  min-width: 300px;
+}
+
+/* 品質評估卡（內聯版本，在執行回測按鈕右側） */
+.quality-assessment-card-inline {
+  flex: 0 0 320px;
+  bottom: 50px;
+  position: relative;
+  max-width: 320px;
+  margin-left: auto;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  padding: 12px 14px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+/* 品質評估卡（回測結果區） - 保留用於其他可能的用途 */
+.quality-assessment-card {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border: 1px solid #dee2e6;
+  border-radius: 10px;
+  padding: 20px;
+  margin: 20px 0;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.quality-assessment-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #495057;
+  margin: 0 0 12px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.quality-assessment-title::before {
+  content: '📊';
+  font-size: 18px;
+}
+
+.quality-assessment-card-inline .quality-assessment-title {
+  font-size: 14px;
+  margin: 0 0 8px 0;
+}
+
+.quality-assessment-card-inline .quality-assessment-title::before {
+  font-size: 15px;
+}
+
+.quality-rating-badge {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 20px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.quality-assessment-card-inline .quality-rating-badge {
+  padding: 10px 12px;
+  margin-bottom: 10px;
+  gap: 10px;
+}
+
+.rating-icon-large {
+  font-size: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.quality-assessment-card-inline .rating-icon-large {
+  font-size: 32px;
+}
+
+.rating-info {
+  flex: 1;
+}
+
+.rating-grade {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.quality-assessment-card-inline .rating-grade {
+  font-size: 15px;
+  margin-bottom: 3px;
+}
+
+.rating-description {
+  font-size: 14px;
+  opacity: 0.9;
+}
+
+.quality-assessment-card-inline .rating-description {
+  font-size: 11px;
+  line-height: 1.3;
+}
+
+.portfolio-eligibility {
+  padding: 12px 16px;
+  background-color: white;
+  border-radius: 6px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.quality-assessment-card-inline .portfolio-eligibility {
+  padding: 8px 10px;
+  font-size: 12px;
+}
+
+.eligible-yes {
+  color: #28a745;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.eligible-no {
+  color: #dc3545;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 響應式設計 */
+@media (max-width: 768px) {
+  .backtest-top-row {
+    flex-direction: column;
+  }
+
+  .backtest-controls {
+    width: 100%;
+    min-width: unset;
+  }
+
+  .quality-assessment-card-inline {
+    width: 100%;
+    min-width: unset;
+  }
+
+  .quality-badge {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .rating-sharpe {
+    margin-left: 0;
+  }
+
+  .quality-rating-badge {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .rating-icon-large {
+    font-size: 36px;
+  }
+
+  .rating-grade {
+    font-size: 18px;
+  }
+}
+
+@media (max-width: 480px) {
+  .alternatives-buttons {
+    flex-direction: column;
+  }
+
+  .alternative-button {
+    width: 100%;
+  }
+
+  .quality-assessment-card {
+    padding: 16px;
   }
 }

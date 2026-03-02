@@ -18,6 +18,15 @@ export interface StockDataResponse {
 
 export interface IndicatorsResponse extends StockDataResponse {}
 
+/** 即時報價（yfinance） */
+export interface StockQuoteResponse {
+  symbol: string;
+  current_price: number;
+  previous_close: number;
+  change: number;
+  change_percent: number;
+}
+
 export interface PredictionResponse {
   symbol: string;
   probabilities: Record<string, number>;
@@ -44,6 +53,9 @@ export interface BacktestResponse {
   trade_count: number;
   sharpe_ratio: number | null;
   equity_curve: EquityCurvePoint[];
+  quality_rating?: string;
+  quality_label?: string;
+  portfolio_eligible?: boolean;
 }
 
 /** 虛擬下單的參考來源（供 DQV 佔比） */
@@ -60,6 +72,28 @@ export interface VirtualOrder {
   orderDate: string; // ISO 字串
   source: VirtualOrderSource;
   note?: string;
+}
+
+/** 替代股票建議 */
+export interface AlternativeStock {
+  symbol: string;
+  name: string;
+  category: string;
+  rating: string;
+  sharpe: number | null;
+}
+
+/** 股票品質評級回應 */
+export interface StockRatingResponse {
+  symbol: string;
+  rating: 'A' | 'B' | 'C' | 'D' | 'F';
+  label: string;
+  color: string;
+  sharpe_ratio: number | null;
+  portfolio_eligible: boolean;
+  warning: boolean;
+  description: string;
+  alternatives?: AlternativeStock[];
 }
 
 
